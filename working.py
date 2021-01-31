@@ -14,17 +14,21 @@ def return_2():
 
 
 
-mytask = Task(name='mytask', callable=return_1)
-mytask2 = Task(name='mytask2', callable=return_2)
-mytask3 = Task(name='mytask3', callable=return_2)
-mytask4 = Task(name='mytask4', callable=return_1)
+scrape_zillow   = Task(name='scrape_zillow', callable=return_1)
+scrape_redfin   = Task(name='scrape_refin', callable=return_1)
+scrape_mls      = Task(name='scrape_mls', callable=return_1)
 
 
-mytask >> mytask2 
-mytask2 >> mytask4 
-mytask3 >> mytask4 
+load_new_files  = Task(name='load_new_files', callable=return_1)
 
-print(mytask)
-print(mytask2)
-print(mytask3)
-print(mytask4)
+[scrape_zillow, scrape_redfin, scrape_mls] >> load_new_files
+
+
+scrape_schedule = Schedule(name='scrape_schedule', components=[scrape_zillow, scrape_redfin, scrape_mls])
+
+print(scrape_zillow)
+print(scrape_redfin)
+print(scrape_mls)
+print(load_new_files)
+
+print(scrape_schedule)

@@ -134,4 +134,5 @@ venv
 #hella dont include pyc files
 *.pyc
 
+.vscode/
 

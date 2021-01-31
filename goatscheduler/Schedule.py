@@ -1,36 +1,27 @@
 from __future__ import annotations
-from typing import Type, List, Set, Union
+from typing import Type, List, Set, Union, AnyStr
+from .Component import Component
 from .Task import Task 
 
 
-class Schedule():
 
-    def __init__(self, tasks: Set[Type[Task]] = None) -> None:
-        self.tasks = set()
-        self.task_dependencies = set()
-        self.task_dependents = set()
-        if tasks is not None and not isinstance(tasks, set):
-            tasks = set(tasks)
-        
-        if tasks is not None:
-            self.add_tasks(tasks)
-    
-    
-    def _add_dependencies_from_task(self, task: Type[Task]) -> None:
-        for dependency in task.task_dependencies:
-            self.task_dependencies.add(dependency)
-    
-    def _add_dependents_from_task(self, task: Type[Task]) -> None:
-        for dependent in task.task_dependents:
-            self.task_dependents.add(dependent)
-    
-    
-    def add_task(self, task: Type[Task]) -> None:
-        self.tasks.add(task)
-        self._add_dependencies_from_task(task)
-        self._add_dependents_from_task(task)
+class Schedule(Component):
 
-    def add_tasks(self, tasks: Union(List[Type[Task]], Set[Type[Task]])) -> None:
-        tasks = set(tasks)
-        for task in tasks:
-            self.add_task(task)
+    def __init__(
+        self,
+        name: str,
+        components: List[Type[Component]] = []
+    ) -> None:
+        super().__init__(name)
+        self.components     = []
+        self.add_components(components)
+
+    def add_component(self, component: Type[Component]) -> None:
+        self.components.append(component)
+        for comp in component.components:
+            self.add_dependency_link(comp)
+
+    def add_components(self, components: List[Component]) -> None:
+        for component in components:
+            self.add_component(component)
+
