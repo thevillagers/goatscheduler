@@ -9,7 +9,6 @@ class Component:
         name: str
     ) -> None:
         self.name                                   = name
-        self.components:    List[Type[Component]]   = []
         self.dependencies:  List[Type[Component]]   = []
         self.dependents:    List[Type[Component]]   = []
 
