@@ -32,16 +32,24 @@ class Schedule:
         return name + parent + components + dependencies + dependents 
 
     def add_component(self, component: Union[Task, Schedule]):
-        self.components = list(set(self.components + [component]))
-        self.dependencies = list(set(self.dependencies + component.dependencies))
-        self.dependents = list(set(self.dependents + component.dependents))
+        if component not in self:
+            self.components.append(component)
+            component.parent = self 
+
+        for dependency in component.dependencies:
+            self._add_dependency(dependency)
+        
+        for dependent in component.dependents:
+            self._add_dependent(dependent)
 
 
     def _add_dependency(self, task):
-        self.dependencies = list(set(self.dependencies + [task]))
+        if task not in self:
+            self.dependencies = list(set(self.dependencies + [task]))
 
     def _add_dependent(self, task):
-        self.dependents = list(set(self.dependents + [task]))
+        if task not in self:
+            self.dependents = list(set(self.dependents + [task]))
 
     def add_dependency_link(self, task):
         task._add_dependency(self)
@@ -76,7 +84,7 @@ class Schedule:
         if not isinstance(components, list): components = [components]
         for component in components:
             self.add_component(component)
-            component.parent = self 
 
     def __contains__(self, components):
+        if not isinstance(components, list): components = [components]
         return set(components).issubset(set(self.components))
