@@ -9,7 +9,8 @@ class Schedule:
     def __init__(
         self,
         name: str,
-        components: List[Union[Task, Schedule]]
+        components: List[Union[Task, Schedule]],
+        parent: Schedule = None
     ) -> None:
         self.name                                       = name 
         self.components: List[Union[Task, Schedule]]    = []
@@ -48,7 +49,8 @@ class Schedule:
     def __rrshift__(self, components):
         if not isinstance(components, list): components = [components]
         for component in components:
-                component.add_dependency_link(self)
+            print(component)
+            component.add_dependency_link(self)
 
     def __lshift__(self, components):
         if not isinstance(components, list): components = [components]
