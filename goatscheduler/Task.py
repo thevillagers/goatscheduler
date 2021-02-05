@@ -14,6 +14,7 @@ class Task:
         parent: Schedule    = None
     ):
         self.name           = name 
+        self.parent         = parent
         self.callable       = callable
         self.callable_args  = callable_kwargs
 
@@ -22,10 +23,11 @@ class Task:
         self.run_status     = {}
 
     def __str__(self):
-        dependencies = ', '.join([dependency.name for dependency in self.dependencies])
-        dependents = ', '.join([dependent.name for dependent in self.dependents])
-        return f'Task: {self.name}\nDependencies: {dependencies}\nDependents: {dependents}'
-
+        dependencies = f'Dependencies: {", ".join([dependency.name for dependency in self.dependencies])}\n' 
+        dependents = f'Dependents: {", ".join([dependent.name for dependent in self.dependents])}\n'
+        name = f'Task: {self.name}\n'
+        parent = f'Parent: {self.parent}\n'
+        return name + parent + dependencies + dependents 
 
     def _add_dependency(self, task):
         self.dependencies = list(set(self.dependencies + [task]))

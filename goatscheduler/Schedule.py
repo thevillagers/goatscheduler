@@ -9,10 +9,11 @@ class Schedule:
     def __init__(
         self,
         name: str,
-        components: List[Union[Task, Schedule]],
+        components: List[Union[Task, Schedule]] = [],
         parent: Schedule = None
     ) -> None:
-        self.name                                       = name 
+        self.name                                       = name
+        self.parent                                     = parent
         self.components: List[Union[Task, Schedule]]    = []
         self.dependencies: List[Union[Task, Schedule]]  = []
         self.dependents: List[Union[Task, Schedule]]    = []
@@ -23,7 +24,12 @@ class Schedule:
     def __str__(self):
         dependencies = ', '.join([dependency.name for dependency in self.dependencies])
         dependents = ', '.join([dependent.name for dependent in self.dependents])
-        return f'Schedule: {self.name}\nComponents: {", ".join([component.name for component in self.components])}\nDependencies: {dependencies}\nDependents: {dependents}'
+        name = f'Schedule: {self.name}\n'
+        parent = f'Parent: {self.parent}\n'
+        components = f'Components: {", ".join([component.name for component in self.components])}\n'
+        dependencies = f'Dependencies: {dependencies}\n'
+        dependents = f'Dependents: {dependents}\n'
+        return name + parent + components + dependencies + dependents 
 
     def add_component(self, component: Union[Task, Schedule]):
         self.components = list(set(self.components + [component]))
@@ -45,19 +51,32 @@ class Schedule:
         if not isinstance(components, list): components = [components]
         for component in components:
             self.add_dependency_link(component)
+        return components 
 
     def __rrshift__(self, components):
         if not isinstance(components, list): components = [components]
         for component in components:
             print(component)
             component.add_dependency_link(self)
+        return self
 
     def __lshift__(self, components):
         if not isinstance(components, list): components = [components]
         for component in components:
             component.add_dependency_link(self)
+        return components 
 
     def __rlshift__(self, components):
         if not isinstance(components, list): components = [components]
         for component in components:
             self.add_dependency_link(component)
+        return self 
+
+    def __iadd__(self, components):
+        if not isinstance(components, list): components = [components]
+        for component in components:
+            self.add_component(component)
+            component.parent = self 
+
+    def __contains__(self, components):
+        return set(components).issubset(set(self.components))
