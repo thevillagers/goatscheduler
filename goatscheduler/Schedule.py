@@ -1,22 +1,28 @@
 from __future__ import annotations
 from typing import Type, List, Set, Union, AnyStr
 from .Task import Task 
+from .Component import Component
 
 
 
-class Schedule:
+class Schedule(Component):
 
     def __init__(
         self,
         name: str,
-        components: List[Union[Task, Schedule]] = [],
-        parent: Schedule = None
+        parent: Schedule = None,
+        components: List[Type[Component]] = [],
+        dependencies: List[Type[Component]] = [],
+        dependents: List[Type[Component]] = []
     ) -> None:
-        self.name                                       = name
-        self.parent                                     = parent
+        super().__init__(
+            name=name,
+            parent=parent,
+            dependencies=dependencies,
+            dependents=dependents
+        )
         self.components: List[Union[Task, Schedule]]    = []
-        self.dependencies: List[Union[Task, Schedule]]  = []
-        self.dependents: List[Union[Task, Schedule]]    = []
+
         for component in components:
             self.add_component(component)
 
@@ -25,7 +31,7 @@ class Schedule:
         dependencies = ', '.join([dependency.name for dependency in self.dependencies])
         dependents = ', '.join([dependent.name for dependent in self.dependents])
         name = f'Schedule: {self.name}\n'
-        parent = f'Parent: {self.parent}\n'
+        parent = f'Parent: {self.parent if self.parent is not None else "No parent"}\n'
         components = f'Components: {", ".join([component.name for component in self.components])}\n'
         dependencies = f'Dependencies: {dependencies}\n'
         dependents = f'Dependents: {dependents}\n'
@@ -33,52 +39,9 @@ class Schedule:
 
     def add_component(self, component: Union[Task, Schedule]):
         if component not in self:
+            print(f'Adding component {component.name} to {self.name}')
             self.components.append(component)
-            component.parent = self 
-
-        for dependency in component.dependencies:
-            self._add_dependency(dependency)
-        
-        for dependent in component.dependents:
-            self._add_dependent(dependent)
-
-
-    def _add_dependency(self, task):
-        if task not in self:
-            self.dependencies = list(set(self.dependencies + [task]))
-
-    def _add_dependent(self, task):
-        if task not in self:
-            self.dependents = list(set(self.dependents + [task]))
-
-    def add_dependency_link(self, task):
-        task._add_dependency(self)
-        self._add_dependent(task)
-    
-    def __rshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            self.add_dependency_link(component)
-        return components 
-
-    def __rrshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            print(component)
-            component.add_dependency_link(self)
-        return self
-
-    def __lshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            component.add_dependency_link(self)
-        return components 
-
-    def __rlshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            self.add_dependency_link(component)
-        return self 
+            component.parent = self
 
     def __iadd__(self, components):
         if not isinstance(components, list): components = [components]

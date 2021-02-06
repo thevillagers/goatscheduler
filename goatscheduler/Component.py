@@ -6,40 +6,58 @@ class Component:
 
     def __init__(
         self,
-        name: str
-    ) -> None:
-        self.name                                   = name
-        self.dependencies:  List[Type[Component]]   = []
-        self.dependents:    List[Type[Component]]   = []
+        name: str,
+        parent: Schedule = None,
+        dependencies: List[Type[Component]] = [],
+        dependents: List[Type[Component]] = []
+    ):
+        self.name           = name 
+        self.parent         = parent 
+        
+        self.dependencies   = dependencies 
+        self.dependents     = dependents 
+
+        self.status_dict    = {}
+
 
     def __str__(self):
-        dependencies = ', '.join([dependency.name for dependency in self.dependencies])
-        dependents = ', '.join([dependent.name for dependent in self.dependents])
-        return f'Component: {self.name}\nDependencies: {dependencies}\nDependents: {dependents}'
+        # Implement this for task and schedule separately
+        raise NotImplementedError
 
+    def _add_dependency(self, component):
+        if component not in self.dependencies: self.dependencies.append(component)
 
-    def _add_dependency(self, component: Type[Component]):
-        self.dependencies = list(set(self.dependencies + [component]))
+    def _add_dependent(self, component):
+        if component not in self.dependents: self.dependents.append(component)
 
-    def _add_dependent(self, component: Type[Component]):
-        self.dependents = list(set(self.dependents + [component]))
-
-    def add_dependency_link(self, component: Type[Component]):
+    def runs_before(self, component):
         component._add_dependency(self)
         self._add_dependent(component)
-    
-    def __rshift__(self, component: Type[Component]):
-        self.add_dependency_link(component)
 
-    def __rrshift__(self, components: List[Type[Component]]):
+    def runs_after(self, component):
+        self._add_dependency(component)
+        component._add_dependent(self)
+
+    def __rshift__(self, components):
+        if not isinstance(components, list): components = [components]
         for component in components:
-            if isinstance(component, Component):
-                component.add_dependency_link(self)
+            self.runs_before(component)
+        return components 
 
-    def __lshift__(self, component: Type[Component]):
-        component.add_dependency_link(self)
-
-    def __rlshift__(self, components: List[Type[Component]]):
+    def __rrshift__(self, components):
+        if not isinstance(components, list): components = [components]
         for component in components:
-            if isinstance(component, Component):
-                self.add_dependency_link(component)
+                self.runs_after(component)
+        return self 
+
+    def __lshift__(self, components):
+        if not isinstance(components, list): components = [components]
+        for component in components:
+            self.runs_after(component)
+        return components 
+
+    def __rlshift__(self, components):
+        if not isinstance(components, list): components = [components]
+        for component in components:
+            self.runs_before(component)
+        return self 

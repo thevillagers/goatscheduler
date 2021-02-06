@@ -1,67 +1,36 @@
 from __future__ import annotations
-from typing import Callable, Union, List 
+from typing import Callable, Union, List, Type
 #from .Schedule import Schedule
 from .TaskRunHandler import TaskRunHandler
+from .Component import Component
 import datetime
 
-class Task:
+class Task(Component):
 
     def __init__(
         self,
         name: str,
         callable: Callable,
         callable_kwargs: dict = {},
-        parent: Schedule    = None
+        parent: Schedule = None,
+        dependencies: List[Type[Component]] = [],
+        dependents: List[Type[Component]] = []
     ):
-        self.name           = name 
-        self.parent         = parent
-        self.callable       = callable
-        self.callable_args  = callable_kwargs
-
-        self.dependencies   = []
-        self.dependents     = []
-        self.run_status     = {}
+        super().__init__(
+            name=name,
+            parent=parent,
+            dependencies=dependencies,
+            dependents=dependents
+        )
+        self.callable           = callable
+        self.callable_kwargs    = callable_kwargs
 
     def __str__(self):
         dependencies = f'Dependencies: {", ".join([dependency.name for dependency in self.dependencies])}\n' 
         dependents = f'Dependents: {", ".join([dependent.name for dependent in self.dependents])}\n'
         name = f'Task: {self.name}\n'
-        parent = f'Parent: {self.parent}\n'
+        parent = f'Parent: {self.parent.name if self.parent is not None else "No parent"}\n'
         return name + parent + dependencies + dependents 
-
-    def _add_dependency(self, task):
-        self.dependencies = list(set(self.dependencies + [task]))
-
-    def _add_dependent(self, task):
-        self.dependents = list(set(self.dependents + [task]))
-
-    def add_dependency_link(self, task):
-        task._add_dependency(self)
-        self._add_dependent(task)
-    
-    def __rshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            self.add_dependency_link(component)
-        return components 
-
-    def __rrshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-                component.add_dependency_link(self)
-        return self 
-
-    def __lshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            component.add_dependency_link(self)
-        return components 
-
-    def __rlshift__(self, components):
-        if not isinstance(components, list): components = [components]
-        for component in components:
-            self.add_dependency_link(component)
-        return self 
 
     def run(self):
         return_dict = {'task_failed': 1, 'task_start_timestamp': datetime.datetime.now()}
