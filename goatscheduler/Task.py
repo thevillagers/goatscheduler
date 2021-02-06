@@ -33,15 +33,16 @@ class Task(Component):
         return name + parent + dependencies + dependents 
 
     def run(self):
-        return_dict = {'task_failed': 1, 'task_start_timestamp': datetime.datetime.now()}
+        self.status_dict['in_progress'] = 1
+        self.status_dict['task_start_timestamp'] = datetime.datetime.now()
         try: 
             function_return = self.callable(**self.callable_kwargs)
-            return_dict['task_failed'] = 0
-            return_dict['task_end_timestamp'] = datetime.datetime.now()
-            return_dict['task_runtime'] = return_dict['task_end_timestamp'] - return_dict['task_start_timestamp']
+            self.status_dict['in_progress'] = 0
+            self.status_dict['task_failed'] = 0
+            self.status_dict['task_end_timestamp'] = datetime.datetime.now()
+            self.status_dict['task_runtime'] = self.status_dict['task_end_timestamp'] - self.status_dict['task_start_timestamp']
             if isinstance(function_return, dict):
-                return_dict.update(function_return)
+                self.status_dict.update(function_return)
         except Exception as e:
+            self.status_dict['task_failed'] = 1
             print(e)
-        
-        self.run_status = return_dict
