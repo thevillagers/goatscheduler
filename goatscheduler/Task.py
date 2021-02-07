@@ -13,18 +13,14 @@ class Task(Component):
         callable: Callable,
         callable_kwargs: dict = {},
         parent: Schedule = None,
-        dependencies: List[Type[Component]] = [],
-        dependents: List[Type[Component]] = []
+        run_manager: TaskRunHandler = TaskRunHandler()
     ):
         super().__init__(
             name=name,
-            parent=parent,
-            dependencies=dependencies,
-            dependents=dependents
+            parent=parent
         )
         self.callable           = callable
         self.callable_kwargs    = callable_kwargs
-
     def __str__(self):
         dependencies = f'Dependencies: {", ".join([dependency.name for dependency in self.dependencies])}\n' 
         dependents = f'Dependents: {", ".join([dependent.name for dependent in self.dependents])}\n'
@@ -46,3 +42,9 @@ class Task(Component):
         except Exception as e:
             self.status_dict['task_failed'] = 1
             print(e)
+
+    def check_ready_status(self):
+        for dependency in self.dependencies:
+            if 'success' not in dependency.status_dict or dependency['success'] != 1:
+                return False 
+        return True

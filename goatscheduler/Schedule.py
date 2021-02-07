@@ -11,15 +11,11 @@ class Schedule(Component):
         self,
         name: str,
         parent: Schedule = None,
-        components: List[Type[Component]] = [],
-        dependencies: List[Type[Component]] = [],
-        dependents: List[Type[Component]] = []
+        components: List[Type[Component]] = []
     ) -> None:
         super().__init__(
             name=name,
-            parent=parent,
-            dependencies=dependencies,
-            dependents=dependents
+            parent=parent
         )
         self.components: List[Union[Task, Schedule]]    = []
 
@@ -51,3 +47,13 @@ class Schedule(Component):
     def __contains__(self, components):
         if not isinstance(components, list): components = [components]
         return set(components).issubset(set(self.components))
+
+    def check_ready_status(self):
+        if self.parent is not None:
+            if 'ready' not in self.parent.status_dict or self.parent.status_dict['ready'] != 1:
+                return False
+        for dependency in self.dependencies:
+            if 'success' not in dependency.status_dict or dependency.status_dict['success'] != 1:
+                return False 
+        return True 
+            

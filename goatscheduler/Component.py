@@ -8,14 +8,12 @@ class Component:
         self,
         name: str,
         parent: Schedule = None,
-        dependencies: List[Type[Component]] = [],
-        dependents: List[Type[Component]] = []
     ):
         self.name           = name 
         self.parent         = parent 
         
-        self.dependencies   = dependencies 
-        self.dependents     = dependents 
+        self.dependencies   = []
+        self.dependents     = []
 
         self.status_dict    = {}
 
@@ -25,10 +23,12 @@ class Component:
         raise NotImplementedError
 
     def _add_dependency(self, component):
-        if component not in self.dependencies: self.dependencies.append(component)
+        print(f'calling _add_dependency on {self.name} with {component.name}')
+        self.dependencies.append(component)
 
     def _add_dependent(self, component):
-        if component not in self.dependents: self.dependents.append(component)
+        print(f'calling _add_dependent on {self.name} with {component.name}')
+        self.dependents.append(component)
 
     def runs_before(self, component):
         component._add_dependency(self)
@@ -40,20 +40,24 @@ class Component:
 
     def __rshift__(self, components):
         if not isinstance(components, list): components = [components]
+        print(len(components))
         for component in components:
             self.runs_before(component)
-        return components 
+        
+        if len(components) == 1: return components[0]
+        return components
 
     def __rrshift__(self, components):
         if not isinstance(components, list): components = [components]
         for component in components:
-                self.runs_after(component)
+            self.runs_after(component)
         return self 
 
     def __lshift__(self, components):
         if not isinstance(components, list): components = [components]
         for component in components:
             self.runs_after(component)
+        if len(components) == 1: return components[0]
         return components 
 
     def __rlshift__(self, components):
@@ -61,3 +65,6 @@ class Component:
         for component in components:
             self.runs_before(component)
         return self 
+
+    def check_ready_status(self):
+        raise NotImplementedError
