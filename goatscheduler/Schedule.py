@@ -48,12 +48,17 @@ class Schedule(Component):
         if not isinstance(components, list): components = [components]
         return set(components).issubset(set(self.components))
 
-    def check_ready_status(self):
-        if self.parent is not None:
-            if 'ready' not in self.parent.status_dict or self.parent.status_dict['ready'] != 1:
-                return False
+    def refresh_state(self):
+        if self.parent is not None and self.parent.state['ready'] != 1:
+            self.state['ready'] = 0
+            self.state['not_ready'] = 1
+            return False
         for dependency in self.dependencies:
-            if 'success' not in dependency.status_dict or dependency.status_dict['success'] != 1:
+            if dependency.state['success'] != 1:
+                self.state['ready'] = 0
+                self.state['not_ready'] = 1
                 return False 
+        self.state['ready'] = 1 
+        self.state['not_ready'] = 0
         return True 
             

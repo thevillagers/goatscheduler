@@ -29,22 +29,31 @@ class Task(Component):
         return name + parent + dependencies + dependents 
 
     def run(self):
-        self.status_dict['in_progress'] = 1
-        self.status_dict['task_start_timestamp'] = datetime.datetime.now()
+        self.state['running'] = 1
+        self.state['ready'] = 0
+        self.state['not_ready'] = 1
         try: 
             function_return = self.callable(**self.callable_kwargs)
-            self.status_dict['in_progress'] = 0
-            self.status_dict['task_failed'] = 0
-            self.status_dict['task_end_timestamp'] = datetime.datetime.now()
-            self.status_dict['task_runtime'] = self.status_dict['task_end_timestamp'] - self.status_dict['task_start_timestamp']
             if isinstance(function_return, dict):
-                self.status_dict.update(function_return)
+                self.state.update(function_return)
+            self.state['success'] = 1
+            self.state['fail'] = 0 
         except Exception as e:
-            self.status_dict['task_failed'] = 1
+            self.state['success'] = 0
+            self.state['fail'] = 1
             print(e)
+        self.state['running'] = 0
 
-    def check_ready_status(self):
+    def refresh_state(self):
+        if self.state['success'] or self.state['fail'] or self.state['running']:
+            self.state['ready'] = 0
+            self.state['not_ready'] = 1
+            return False
         for dependency in self.dependencies:
-            if 'success' not in dependency.status_dict or dependency['success'] != 1:
+            if dependency.state['success'] != 1:
+                self.state['ready'] = 0
+                self.state['not_ready'] = 1
                 return False 
+        self.state['ready'] = 1
+        self.state['not_ready'] = 0
         return True

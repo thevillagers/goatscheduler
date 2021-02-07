@@ -15,7 +15,13 @@ class Component:
         self.dependencies   = []
         self.dependents     = []
 
-        self.status_dict    = {}
+        self.state          = {
+            'success': 0,
+            'fail': 0,
+            'running': 0,
+            'ready': 0,
+            'not_ready': 1
+        }
 
 
     def __str__(self):
@@ -66,5 +72,5 @@ class Component:
             self.runs_before(component)
         return self 
 
-    def check_ready_status(self):
+    def refresh_state(self):
         raise NotImplementedError
