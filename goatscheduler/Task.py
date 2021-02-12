@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Callable, Union, List, Type
-#from .Schedule import Schedule
-from .TaskRunHandler import TaskRunHandler
 from .Component import Component
 import datetime
+from pytimeparse import parse
+
 
 class Task(Component):
 
@@ -13,7 +13,8 @@ class Task(Component):
         callable: Callable,
         callable_kwargs: dict = {},
         parent: Schedule = None,
-        run_manager: TaskRunHandler = TaskRunHandler()
+        run_interval: str = None,
+        run_offset: str = None
     ):
         super().__init__(
             name=name,
@@ -21,6 +22,21 @@ class Task(Component):
         )
         self.callable           = callable
         self.callable_kwargs    = callable_kwargs
+
+        if run_interval is not None:
+            self.run_interval = parse(run_interval)
+        else:
+            self.run_interval = None 
+
+        if run_offset is not None:
+            self.run_offset = parse(run_offset)
+        else:
+            self.run_offset = 0
+
+        self.min_run_timestamp  = datetime.datetime.now() + datetime.timedelta(seconds=self.run_offset)
+        self.last_run_timestamp = None
+
+
     def __str__(self):
         dependencies = f'Dependencies: {", ".join([dependency.name for dependency in self.dependencies])}\n' 
         dependents = f'Dependents: {", ".join([dependent.name for dependent in self.dependents])}\n'
