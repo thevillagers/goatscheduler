@@ -1,6 +1,15 @@
 from __future__ import annotations
 from typing import Type, List, Set, Union, AnyStr
+import datetime
+from enum import Enum 
 
+class RunState(Enum):
+    NONE        = 1
+    READY       = 2
+    NOT_READY   = 3 
+    RUNNING     = 3
+    SUCCESS     = 4 
+    FAIL        = 5
 
 class Component:
 
@@ -15,13 +24,10 @@ class Component:
         self.dependencies   = []
         self.dependents     = []
 
-        self.state          = {
-            'success': 0,
-            'fail': 0,
-            'running': 0,
-            'ready': 0,
-            'not_ready': 1
-        }
+        self.init_timestamp = datetime.datetime.now()
+
+        self.state          = RunState.NONE 
+
 
 
     def __str__(self):
@@ -72,5 +78,34 @@ class Component:
             self.runs_before(component)
         return self 
 
+
+    def has_run(self):
+        return self.state is RunState.SUCCESS or self.state is RunState.FAIL
+
+    def is_running(self):
+        return self.state is RunState.RUNNING
+
+    def is_ready(self):
+        raise NotImplementedError
+
     def refresh_state(self):
         raise NotImplementedError
+    
+    def set_state(self, state):
+        self.state = state
+
+    
+    def propagate_state_downstream(self, state):
+        to_prop = self.dependents
+        visited = set() 
+        while len(to_prop) > 0:
+            if to_prop[0] in visited:
+                to_prop = to_prop[1:]
+                continue 
+            component = to_prop[0]
+            component.set_state(state)
+            visited.add(component)
+            for dependent in component.dependents:
+                to_prop.append(dependent)
+            to_prop = to_prop[1:]
+    
