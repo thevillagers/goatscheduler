@@ -61,7 +61,7 @@ class Scheduler():
                     'thread': threading.Thread(target=self.tasks[i].run)
                 }
                 self.task_threads.append(new_task_thread)
-                logger.log(20, f'<Starting thread {len(self.task_threads)} - running task {self.tasks[i].name}>')
+                logger.log(20, f'<Starting thread {len(self.task_threads)-1} - running task {self.tasks[i].name}>')
                 self.task_threads[-1]['thread'].start()
             i += 1
 
