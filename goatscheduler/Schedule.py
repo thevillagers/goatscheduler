@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Type, List, Set, Union, AnyStr
 from .Task import Task 
-from .Component import Component
-
+from .Component import Component, RunState
+from . import logger
 
 
 class Schedule(Component):
@@ -35,7 +35,7 @@ class Schedule(Component):
 
     def add_component(self, component: Union[Task, Schedule]):
         if component not in self:
-            print(f'Adding component {component.name} to {self.name}')
+            logger.log(20, f'<Adding component {component.name} to schedule {self.name}')
             self.components.append(component)
             component.parent = self
 
@@ -48,17 +48,15 @@ class Schedule(Component):
         if not isinstance(components, list): components = [components]
         return set(components).issubset(set(self.components))
 
+    def component_failed(self):
+        for component in self.components:
+            if component.state is RunState.FAIL:
+                return True 
+        return False 
+
     def refresh_state(self):
-        if self.parent is not None and self.parent.state['ready'] != 1:
-            self.state['ready'] = 0
-            self.state['not_ready'] = 1
-            return False
-        for dependency in self.dependencies:
-            if dependency.state['success'] != 1:
-                self.state['ready'] = 0
-                self.state['not_ready'] = 1
-                return False 
-        self.state['ready'] = 1 
-        self.state['not_ready'] = 0
-        return True 
-            
+        if self.parent is not None and self.parent.state is not RunState.READY:
+            return # Don't do anything if the parent is not ready 
+        if not self.dependencies_successful():
+            return 
+        self.set_state(RunState.READY)

@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Type, List, Set, Union, AnyStr
 import datetime
-from enum import Enum 
+from enum import Enum
+from . import logger
 
 class RunState(Enum):
     NONE        = 1
@@ -10,6 +11,7 @@ class RunState(Enum):
     RUNNING     = 3
     SUCCESS     = 4 
     FAIL        = 5
+
 
 class Component:
 
@@ -35,11 +37,11 @@ class Component:
         raise NotImplementedError
 
     def _add_dependency(self, component):
-        print(f'calling _add_dependency on {self.name} with {component.name}')
+        logger.log(20, f'<Adding dependency {component.name} to {self.name}>')
         self.dependencies.append(component)
 
     def _add_dependent(self, component):
-        print(f'calling _add_dependent on {self.name} with {component.name}')
+        logger.log(20, f'<Adding dependent {component.name} to {self.name}>')
         self.dependents.append(component)
 
     def runs_before(self, component):
@@ -52,7 +54,6 @@ class Component:
 
     def __rshift__(self, components):
         if not isinstance(components, list): components = [components]
-        print(len(components))
         for component in components:
             self.runs_before(component)
         
@@ -85,16 +86,18 @@ class Component:
     def is_running(self):
         return self.state is RunState.RUNNING
 
-    def is_ready(self):
-        raise NotImplementedError
-
-    def refresh_state(self):
-        raise NotImplementedError
-    
     def set_state(self, state):
+        if state is self.state: 
+            return
+        logger.log(20, f'<State of {self.name} changed from {self.state} to {state}>')
         self.state = state
 
-    
+    def dependencies_successful(self):
+        for dependency in self.dependencies:
+            if dependency.state is not RunState.SUCCESS:
+                return False 
+        return True
+
     def propagate_state_downstream(self, state):
         to_prop = self.dependents
         visited = set() 
@@ -108,4 +111,7 @@ class Component:
             for dependent in component.dependents:
                 to_prop.append(dependent)
             to_prop = to_prop[1:]
+    
+    def refresh_state(self):
+        raise NotImplementedError
     
