@@ -3,11 +3,9 @@ import gc
 from importlib import reload
 from .Component import Component, RunState
 from .Task import Task 
-from __future__ import annotations
 from typing import List 
 from .Schedule import Schedule 
 from .Task import Task 
-from .Component import Component
 import time
 import threading
 from . import logger

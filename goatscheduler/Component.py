@@ -4,7 +4,7 @@ import datetime
 from enum import Enum
 from . import logger
 
-ComponentSingleOrList = Union[Type[Component], List[Type[Component]]]
+ComponentSingleOrList = Union[Type['Component'], List[Type['Component']]]
 
 # RunState enum used to define the run state of components
 class RunState(Enum):
@@ -195,17 +195,24 @@ class Component:
             state (RunState): The state all downstream tasks will be set to
         """
         to_prop = self.dependents
-        visited = set() 
+        visited = set()
+        parents = set()
         while len(to_prop) > 0:
-            if to_prop[0] in visited:
-                to_prop = to_prop[1:]
-                continue 
             component = to_prop[0]
+            parent = component.parent
+            
+            to_prop = to_prop[1:] 
+
+            if parent is not None and parent not in parents:
+                parent.set_state(state)
+
+            if component in visited:
+                continue 
+
             component.set_state(state)
             visited.add(component)
             for dependent in component.dependents:
                 to_prop.append(dependent)
-            to_prop = to_prop[1:]
     
     def refresh_state(self) -> None:
         """Refreshes the state of a component. Needs to be implemented separately for children.

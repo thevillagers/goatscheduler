@@ -80,6 +80,19 @@ class Task(Component):
     def refresh_state(self) -> None:
         """Refreshes the state of the Task
         """
+        if self.has_run():
+            if self.run_interval is None: 
+                return  # Don't change state if it has already run and isn't set to rerun
+            elif datetime.datetime.now() > self.last_run_timestamp + datetime.timedelta(seconds=self.run_interval):
+                if self.parent is not None:
+                    self.parent.set_state(RunState.NONE)
+                self.set_state(RunState.NONE)
+                self.propagate_state_downstream(RunState.NONE)  # reset the state of anything downstream of current task if this is set to rerun
+                return 
+            else: 
+                return 
+
+
         if self.parent is not None and self.parent.state is not RunState.READY:
             return # don't do anything if the parent is not ready
         if not self.dependencies_successful() or self.is_running():
