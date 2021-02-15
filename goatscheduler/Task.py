@@ -9,39 +9,57 @@ from contextlib import redirect_stdout
 from . import logger
 
 class Task(Component):
+    """Task, the building blocks of the scheduler.
+    """
 
     def __init__(
         self,
         name: str,
         callable: Callable,
         callable_kwargs: dict = {},
-        parent: Schedule = None,
         run_interval: str = None
     ):
-        super().__init__(
-            name=name,
-            parent=parent
-        )
+        """Instantiate a Task. Used for making schedules.
+
+        Args:
+            name (str): Unique name for logging and the UI to distinguish this component from others
+            callable (Callable): The Python callable that this Task should run
+            callable_kwargs (dict, optional): If your function takes arguments, pass them as a dictionary here. Defaults to {}.
+            run_interval (str, optional): If you want your task to run repeatedly after an amount of time, specify it here. Defaults to None.
+        """
+        super().__init__(name=name)
         self.callable           = callable
         self.callable_kwargs    = callable_kwargs
 
+        self.run_interval: int
         if run_interval is not None:
             self.run_interval = parse(run_interval)
         else:
             self.run_interval = None 
 
+        self.last_run_timestamp: datetime.datetime
         self.last_run_timestamp = None
 
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns string representation of this Task
+
+        Returns:
+            str: String representation of this Task
+        """
         dependencies = f'Dependencies: {", ".join([dependency.name for dependency in self.dependencies])}\n' 
         dependents = f'Dependents: {", ".join([dependent.name for dependent in self.dependents])}\n'
         name = f'Task: {self.name}\n'
         parent = f'Parent: {self.parent.name if self.parent is not None else "No parent"}\n'
         return name + parent + dependencies + dependents 
 
-    def run(self):
-        self.state = RunState.RUNNING 
+    def run(self) -> None:
+        """Runs the callable specified for this task and does some work to track the state of the run
+
+        Returns:
+            None, will be a dictionary in a later version.
+        """
+        self.set_state(RunState.RUNNING)
         self.last_run_timestamp = datetime.datetime.now()
         f = io.StringIO()
         with redirect_stdout(f):
@@ -58,9 +76,10 @@ class Task(Component):
         out = f.getvalue()
         logger.log(20, f'{self.name}:\n{out}')
 
-    ## state related functions
 
-    def refresh_state(self):
+    def refresh_state(self) -> None:
+        """Refreshes the state of the Task
+        """
         if self.parent is not None and self.parent.state is not RunState.READY:
             return # don't do anything if the parent is not ready
         if not self.dependencies_successful() or self.is_running():
