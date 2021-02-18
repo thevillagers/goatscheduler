@@ -1,34 +1,22 @@
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, DateTime, Enum as SQLEnum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func
+from enum import Enum
+import os 
+
 
 Base = declarative_base()
+
 
 class Components(Base):
     __tablename__ = 'components'
     name = Column(String, primary_key=True)
+    component_type = Column(String, nullable=False)
+    state = Column(SQLEnum(RunState), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=func.now())
 
-class States(Base):
-    __tablename__ = 'states'
-    name = Column(String, primary_key=True)
-    state = Column(String, nullable=False)
-
-    def __repr__(self):
-        return 'state'
-
-class Tasks(Base):
-    __tablename__ = 'tasks'
-    name = Column(String, primary_key=True)
-    dependencies = Column(String)
-    dependents = Column(String)
-
-    def __repr__(self):
-        return 'tasks'
-
-class Schedules(Base):
-    __tablename__ = 'schedules'
-    name = Column(String, primary_key=True)
 
 
 engine = create_engine('sqlite:///goathousing_test2')

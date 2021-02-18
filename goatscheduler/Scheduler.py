@@ -1,11 +1,11 @@
 from __future__ import annotations
 import gc 
 from importlib import reload
-from .Component import Component, RunState
+from .Component import Component
+from .RunState import RunState
 from .Task import Task 
 from typing import List 
 from .Schedule import Schedule 
-from .Task import Task 
 import time
 import threading
 from . import logger

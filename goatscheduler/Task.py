@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Callable, Union, List, Type
-from .Component import Component, RunState
+from .Component import Component
+from .RunState import RunState
 import datetime
 from pytimeparse import parse
 from enum import Enum

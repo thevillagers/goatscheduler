@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Type, List, Set, Union, AnyStr
 from .Task import Task 
-from .Component import Component, RunState
+from .Component import Component
+from .RunState import RunState
 from . import logger
 
 ComponentSingleOrList = Union[Type[Component], List[Type[Component]]]
