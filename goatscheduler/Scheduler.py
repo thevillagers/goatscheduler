@@ -20,13 +20,14 @@ class Scheduler():
     """Scheduler to run workflows
     """
 
-    def __init__(self, max_threads: int = 3) -> None:
+    def __init__(self, name: str, max_threads: int = 3) -> None:
         """Initializes scheduler to run your workflow
 
         Args:
             max_threads (int, optional): Max amount of threads to run your Tasks. Defaults to 3.
         """
-        
+        self.name = name
+
         self.schedules: List[Schedule]
         self.schedules = []
 
@@ -119,7 +120,8 @@ class Scheduler():
         Args:
             refresh_secs (int, optional): The number of seconds to sleep between refreshing states and starting & killing threads. Defaults to 5.
         """
-        logger.log(20, f'<Starting scheduler>')
+        logger.log(20, f'<Starting scheduler {self.name}>')
+        
         refresh_states_thread = threading.Thread(target=self.refresh_states, args=(refresh_secs,))
         handle_task_threads = threading.Thread(target=self.handle_task_threads, args=(refresh_secs,))
 
