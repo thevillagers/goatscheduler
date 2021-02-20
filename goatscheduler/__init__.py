@@ -6,4 +6,3 @@ from enum import Enum
 from .Logger import Logger 
 
 logger = Logger().logger
-

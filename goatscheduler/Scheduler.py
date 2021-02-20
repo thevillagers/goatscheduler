@@ -6,6 +6,7 @@ from .RunState import RunState
 from .Task import Task 
 from typing import List 
 from .Schedule import Schedule 
+from .SchedulerBackend import SchedulerBackend
 import time
 import threading
 from . import logger
@@ -20,13 +21,19 @@ class Scheduler():
     """Scheduler to run workflows
     """
 
-    def __init__(self, name: str, max_threads: int = 3) -> None:
+    def __init__(
+        self,
+        name: str,
+        max_threads: int = 3,
+        reset_backend: bool = False
+        ) -> None:
         """Initializes scheduler to run your workflow
 
         Args:
             max_threads (int, optional): Max amount of threads to run your Tasks. Defaults to 3.
         """
         self.name = name
+        self.backend = SchedulerBackend(scheduler_name=self.name, reset_backend=reset_backend)
 
         self.schedules: List[Schedule]
         self.schedules = []
@@ -47,9 +54,22 @@ class Scheduler():
             if isinstance(obj, Task):
                 self.tasks.append(obj)
                 self.components.append(obj)
+                self.backend.add_component(name=obj.name, component_type='task')
+                obj.backend = self.backend
             elif isinstance(obj, Schedule):
                 self.schedules.append(obj)
                 self.components.append(obj)
+                self.backend.add_component(name=obj.name, component_type='schedule')
+                obj.backend = self.backend
+
+
+
+        for component in self.components:
+            for dependency in component.dependencies:
+                self.backend.add_component_dependency(component_name=component.name, dependency_name=dependency.name)
+            for dependent in component.dependents:
+                self.backend.add_component_dependent(component_name=component.name, dependent_name=dependent.name)
+            
 
 
     def _refresh_schedule_states(self) -> None:
@@ -72,7 +92,7 @@ class Scheduler():
             if not task_thread['thread'].is_alive():
                 thread_idx_to_kill.append(i)
         for i in sorted(thread_idx_to_kill, reverse=True):
-            logger.log(20, f'<Killing thread {i} - ran task {self.task_threads[i]["task"].name}>')
+            logger.log(20, f'Killing thread {i} - ran task {self.task_threads[i]["task"].name}')
             del self.task_threads[i]
     
     def run_ready_tasks(self) -> None:
@@ -80,13 +100,13 @@ class Scheduler():
         """
         i = 0
         while len(self.task_threads) < self.max_threads and i < len(self.tasks):
-            if self.tasks[i].state is RunState.READY:
+            if self.tasks[i].get_state() is RunState.READY:
                 new_task_thread = {
                     'task': self.tasks[i],
                     'thread': threading.Thread(target=self.tasks[i].run)
                 }
                 self.task_threads.append(new_task_thread)
-                logger.log(20, f'<Starting thread {len(self.task_threads)-1} - running task {self.tasks[i].name}>')
+                logger.log(20, f'Starting thread {len(self.task_threads)-1} - running task {self.tasks[i].name}')
                 self.task_threads[-1]['thread'].start()
             i += 1
 
@@ -120,7 +140,7 @@ class Scheduler():
         Args:
             refresh_secs (int, optional): The number of seconds to sleep between refreshing states and starting & killing threads. Defaults to 5.
         """
-        logger.log(20, f'<Starting scheduler {self.name}>')
+        logger.log(20, f'Starting scheduler {self.name}')
         
         refresh_states_thread = threading.Thread(target=self.refresh_states, args=(refresh_secs,))
         handle_task_threads = threading.Thread(target=self.handle_task_threads, args=(refresh_secs,))

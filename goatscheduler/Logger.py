@@ -16,7 +16,7 @@ class Logger:
 
         logging.basicConfig(
             level=logging.DEBUG, 
-            format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+            format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - <%(message)s>',
             handlers=handlers
         )
 

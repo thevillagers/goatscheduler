@@ -1,19 +1,11 @@
 from __future__ import annotations
 from typing import Type, List, Union
 import datetime
-from enum import Enum
+from .RunState import RunState
 from . import logger
+from .SchedulerBackend import SchedulerBackend
 
 ComponentSingleOrList = Union[Type['Component'], List[Type['Component']]]
-
-# RunState enum used to define the run state of components
-class RunState(Enum):
-    NONE        = 1
-    READY       = 2
-    NOT_READY   = 3 
-    RUNNING     = 3
-    SUCCESS     = 4 
-    FAIL        = 5
 
 # The parent class for tasks and schedules
 class Component:
@@ -28,6 +20,9 @@ class Component:
         """
         self.name = name 
 
+        self.backend: SchedulerBackend
+        self.backend = None 
+
         self.parent: Schedule
         self.parent = None 
     
@@ -40,8 +35,6 @@ class Component:
         self.init_timestamp: datetime.datetime
         self.init_timestamp = datetime.datetime.now()
 
-        self.state: RunState
-        self.state = RunState.NONE 
 
 
 
@@ -60,7 +53,7 @@ class Component:
         Args:
             component (Type[Component]): Component to add as a dependency
         """
-        logger.log(20, f'<Adding dependency {component.name} to {self.name}>')
+        logger.log(20, f'Adding dependency {component.name} to {self.name}')
         self.dependencies.append(component)
 
     def _add_dependent(self, component: Type[Component]) -> None:
@@ -69,7 +62,7 @@ class Component:
         Args:
             component (Type[Component]): Component to add as a dependent
         """
-        logger.log(20, f'<Adding dependent {component.name} to {self.name}>')
+        logger.log(20, f'Adding dependent {component.name} to {self.name}')
         self.dependents.append(component)
 
     def runs_before(self, component: Type[Component]) -> None:
@@ -149,6 +142,8 @@ class Component:
             self.runs_before(component)
         return self 
 
+    def get_state(self) -> RunState:
+        return self.backend.get_component_state(name=self.name)
 
     def has_run(self) -> bool:
         """Returns whether or not the component has already run
@@ -156,7 +151,8 @@ class Component:
         Returns:
             bool: True = state is SUCCESS or FAIL, False = anything else
         """
-        return self.state is RunState.SUCCESS or self.state is RunState.FAIL
+        state = self.get_state()
+        return state is RunState.SUCCESS or state is RunState.FAIL
 
     def is_running(self) -> bool:
         """Returns whether or not the component is currently running
@@ -164,7 +160,8 @@ class Component:
         Returns:
             bool: True if component state is RUNNING, false otherwise
         """
-        return self.state is RunState.RUNNING
+        state = self.get_state()
+        return state is RunState.RUNNING
 
     def set_state(self, state: RunState) -> None:
         """Sets the state of self to the passed state
@@ -172,10 +169,14 @@ class Component:
         Args:
             state (RunState): the desired new state of the component
         """
-        if state is self.state: 
+        if self.backend is None:
+            logger.log(40, f'Idiot, can\'t change state with no backend')
+            raise Exception
+        curr_state = self.get_state()
+        if state is curr_state:
             return
-        logger.log(20, f'<State of {self.name} changed from {self.state} to {state}>')
-        self.state = state
+        self.backend.update_component_state(name=self.name, state=state)
+        logger.log(20, f'State of {self.name} changed from {curr_state} to {state}')
 
     def dependencies_successful(self) -> bool:
         """Returns whether or not the status of all dependencies is SUCCESS
@@ -184,7 +185,7 @@ class Component:
             bool: False if any dependency's state != SUCCESS, True otherwise
         """
         for dependency in self.dependencies:
-            if dependency.state is not RunState.SUCCESS:
+            if dependency.get_state() is not RunState.SUCCESS:
                 return False 
         return True
 

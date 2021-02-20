@@ -47,7 +47,7 @@ class Schedule(Component):
             component (Type[Component]): Component to add to the Schedule
         """
         if component not in self:
-            logger.log(20, f'<Adding component {component.name} to schedule {self.name}')
+            logger.log(20, f'Adding component {component.name} to schedule {self.name}')
             self.components.append(component)
             component.parent = self
 
@@ -80,7 +80,7 @@ class Schedule(Component):
             bool: True if at least one component has status FAIL
         """
         for component in self.components:
-            if component.state is RunState.FAIL:
+            if component.get_state() is RunState.FAIL:
                 return True 
         return False 
 
@@ -91,14 +91,14 @@ class Schedule(Component):
             bool: True if all components have state SUCCESS, False otherwise
         """
         for component in self.components:
-            if component.state is not RunState.SUCCESS:
+            if component.get_state() is not RunState.SUCCESS:
                 return False 
         return True 
 
     def refresh_state(self) -> None:
         """Refreshes the state of the schedule.
         """
-        if self.parent is not None and self.parent.state is not RunState.READY:
+        if self.parent is not None and self.parent.get_state() is not RunState.READY:
             return # Don't do anything if the parent is not ready 
         if not self.dependencies_successful():
             return
