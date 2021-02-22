@@ -53,7 +53,7 @@ class Component:
         Args:
             component (Type[Component]): Component to add as a dependency
         """
-        logger.log(20, f'Adding dependency {component.name} to {self.name}')
+        #logger.log(20, f'Adding dependency {component.name} to {self.name}')
         self.dependencies.append(component)
 
     def _add_dependent(self, component: Type[Component]) -> None:
@@ -62,7 +62,7 @@ class Component:
         Args:
             component (Type[Component]): Component to add as a dependent
         """
-        logger.log(20, f'Adding dependent {component.name} to {self.name}')
+        #logger.log(20, f'Adding dependent {component.name} to {self.name}')
         self.dependents.append(component)
 
     def runs_before(self, component: Type[Component]) -> None:
@@ -195,6 +195,7 @@ class Component:
         Args:
             state (RunState): The state all downstream tasks will be set to
         """
+        logger.log(20, f'Component {self.name} propagating state {state} downstream')
         to_prop = self.dependents
         visited = set()
         parents = set()

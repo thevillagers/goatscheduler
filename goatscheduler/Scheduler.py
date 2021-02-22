@@ -10,12 +10,11 @@ from .SchedulerBackend import SchedulerBackend
 import time
 import threading
 from . import logger
+from .API import BackendAPI
 '''
 Scheduler.py
 defines the Scheduler class for scheduling your tasks to run
 '''
-
-
 
 class Scheduler():
     """Scheduler to run workflows
@@ -61,6 +60,8 @@ class Scheduler():
                 self.components.append(obj)
                 self.backend.add_component(name=obj.name, component_type='schedule')
                 obj.backend = self.backend
+
+        self.api = BackendAPI(scheduler_backend=self.backend)
 
 
 

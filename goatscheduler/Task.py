@@ -72,29 +72,36 @@ class Task(Component):
                 self.set_state(RunState.SUCCESS)
             except Exception as e:
                 self.set_state(RunState.FAIL)
+                print('\n\n\n\n\n\n\n\nim in the exception\n\n\n\n')
                 self.propagate_state_downstream(RunState.NOT_READY)
                 logger.log(30, f'<{e}>')
         out = f.getvalue()
-        logger.log(20, f'{self.name}:\n{out}')
+        logger.log(20, f'Output of component {self.name}:\n{out}')
 
 
     def refresh_state(self) -> None:
         """Refreshes the state of the Task
         """
+        
+        # Check if task is up for rerun
+        if self.has_run() and self.run_interval is not None:
+            if datetime.datetime.now() > self.last_run_timestamp + datetime.timedelta(seconds=self.run_interval):
+                self.set_state(RunState.READY)
+                self.propagate_state_downstream(RunState.NONE)
+                return
+            else:
+                return 
+
+        # If not up for rerun, check if parent is ready
         if self.parent is not None and self.parent.get_state() is not RunState.READY:
             return # don't do anything if the parent is not ready
+        
+        # If dependencies aren't ready or already running, do nothing
         if not self.dependencies_successful() or self.is_running():
             return  # Don't change state if dependencies weren't all success or if it is running
-        if self.has_run():
-            if self.run_interval is None: 
-                return  # Don't change state if it has already run and isn't set to rerun
-            elif datetime.datetime.now() > self.last_run_timestamp + datetime.timedelta(seconds=self.run_interval):
-                self.set_state(RunState.READY)
-                self.propagate_state_downstream(RunState.NONE)  # reset the state of anything downstream of current task if this is set to rerun
-                return 
-            else: 
-                return 
-        else: 
-            self.set_state(RunState.READY)
+
+        if self.has_run() and self.run_interval is None:
             return 
+
+        self.set_state(RunState.READY)
 

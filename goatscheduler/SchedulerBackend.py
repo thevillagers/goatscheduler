@@ -1,7 +1,6 @@
 #from goatscheduler.goatscheduler.Component import Component
-from typing import ContextManager
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.sql import func
@@ -9,33 +8,49 @@ from contextlib import contextmanager
 from .RunState import RunState
 from . import logger
 import os 
+from dataclasses import dataclass
 
 
 Base = declarative_base()
 
+@dataclass
 class Components(Base):
     __tablename__ = 'components'
     name = Column(String, primary_key=True)
     component_type = Column(String, nullable=False)
-    state = Column(SQLEnum(RunState), nullable=False)
+    state = Column(Enum(RunState), nullable=False)
     timestamp = Column(DateTime(timezone=True), default=func.now())
-    # dependencies = relationship('Dependencies', primaryjoin='dependencies.component_name==components.name')
-    # dependents = relationship('Dependents', primaryjoin='dependents.component_name==components.name')
 
+    def get_dict(self):
+        return {
+            'name': self.name,
+            'component_type': self.component_type,
+            'state': str(self.state).split('.')[1],
+            'timestamp': str(self.timestamp)
+        }
+
+@dataclass
 class ComponentStateHistory(Base):
     __tablename__ = 'component_state_history'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     component_type = Column(String, nullable=False)
-    state = Column(SQLEnum(RunState), nullable=False)
+    state = Column(Enum(RunState), nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False)
 
+@dataclass
 class Dependencies(Base):
     __tablename__ = 'dependencies'
     id = Column(Integer, primary_key=True)
     component_name = Column(String, ForeignKey('components.name'), nullable=False)
     dependency_name = Column(String, ForeignKey('components.name'), nullable=False)
+    def get_dict(self):
+        return {
+            'component_name': self.component_name,
+            'dependency_name': self.dependency_name
+        }
 
+@dataclass
 class Dependents(Base):
     __tablename__ = 'dependents'
     id = Column(Integer, primary_key=True)
@@ -135,5 +150,17 @@ class SchedulerBackend:
             if not component:
                 raise Exception 
             component.state = state
+
+    def get_components(self):
+        with self.session_scope() as session:
+            components = session.query(Components).all()
+            components = [component.get_dict() for component in components]
+            return components 
+
+    def get_dependencies(self):
+        with self.session_scope() as session:
+            dependencies = session.query(Dependencies).all()
+            dependencies = [dependency.get_dict() for dependency in dependencies]
+            return dependencies
 
 
