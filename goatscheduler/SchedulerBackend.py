@@ -19,6 +19,7 @@ class Components(Base):
     name = Column(String, primary_key=True)
     component_type = Column(String, nullable=False)
     state = Column(Enum(RunState), nullable=False)
+    parent_name = Column(String, default='')
     timestamp = Column(DateTime(timezone=True), default=func.now())
 
     def get_dict(self):
@@ -26,6 +27,7 @@ class Components(Base):
             'name': self.name,
             'component_type': self.component_type,
             'state': str(self.state).split('.')[1],
+            'parent_name': self.parent_name,
             'timestamp': str(self.timestamp)
         }
 
@@ -38,12 +40,26 @@ class ComponentStateHistory(Base):
     state = Column(Enum(RunState), nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False)
 
+@dataclass 
+class ParentChildren(Base):
+    __tablename__ = 'parent_and_children'
+    id = Column(Integer, primary_key=True)
+    parent_name = Column(String, nullable=False)
+    child_name = Column(String, nullable=False)
+
+    def get_dict(self):
+        return {
+            'parent_name': self.parent_name,
+            'child_name': self.child_name
+        }
+
 @dataclass
 class Dependencies(Base):
     __tablename__ = 'dependencies'
     id = Column(Integer, primary_key=True)
     component_name = Column(String, ForeignKey('components.name'), nullable=False)
     dependency_name = Column(String, ForeignKey('components.name'), nullable=False)
+
     def get_dict(self):
         return {
             'component_name': self.component_name,
@@ -103,25 +119,36 @@ class SchedulerBackend:
 
     def add_component(
         self,
-        name: str, 
+        component, 
         component_type: str, 
         state: RunState=RunState.NONE
     ):
-        if component_type != 'task' and component_type != 'schedule':
+        if component_type != 'Task' and component_type != 'Schedule':
             print(f'Component is not type task or schedule. type: {component_type}')
             raise Exception
 
-        if self.get_component(name=name) is None:
-            component = Components(
-                name=name,
+        if self.get_component(name=component.name) is None:
+            parent_name = ''
+            if component.parent is not None:
+                parent_name = component.parent.name
+            component_db = Components(
+                name=component.name,
                 component_type=component_type,
-                state=state
+                state=state,
+                parent_name=parent_name
             )
-            logger.log(20, f'Component with name {name} created')
+            if component.parent is not None:
+                parent_child_db = ParentChildren(
+                    parent_name = component.parent.name,
+                    child_name = component.name
+                )
+            logger.log(20, f'Component with name {component.name} created')
             with self.session_scope() as session:
-                session.add(component)
+                session.add(component_db)
+                if component.parent is not None:
+                    session.add(parent_child_db)
         else:
-            logger.log(40, f'Component with name {name} already exists')
+            logger.log(40, f'Component with name {component.name} already exists')
             raise Exception
 
     def add_component_dependency(
@@ -162,5 +189,11 @@ class SchedulerBackend:
             dependencies = session.query(Dependencies).all()
             dependencies = [dependency.get_dict() for dependency in dependencies]
             return dependencies
+
+    def get_relationships(self):
+        with self.session_scope() as session:
+            relationships = session.query(ParentChildren).all()
+            relationships = [relationship.get_dict() for relationship in relationships]
+            return relationships
 
 

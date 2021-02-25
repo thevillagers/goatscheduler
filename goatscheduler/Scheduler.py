@@ -53,12 +53,12 @@ class Scheduler():
             if isinstance(obj, Task):
                 self.tasks.append(obj)
                 self.components.append(obj)
-                self.backend.add_component(name=obj.name, component_type='task')
+                self.backend.add_component(component=obj, component_type='Task')
                 obj.backend = self.backend
             elif isinstance(obj, Schedule):
                 self.schedules.append(obj)
                 self.components.append(obj)
-                self.backend.add_component(name=obj.name, component_type='schedule')
+                self.backend.add_component(component=obj, component_type='Schedule')
                 obj.backend = self.backend
 
         self.api = BackendAPI(scheduler_backend=self.backend)

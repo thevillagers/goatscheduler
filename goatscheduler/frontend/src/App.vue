@@ -1,18 +1,19 @@
 <template>
   <div id="app">
+    <h1>GOAT Scheduler</h1>
     <Scheduler />
-    <ProgressBar :percent.sync='p' />
+    <!-- <ProgressBar :percent.sync='p' /> -->
   </div>
 </template>
 
 <script>
 import Scheduler from './components/Scheduler.vue'
-import ProgressBar from './components/ProgressBar.vue'
+//import ProgressBar from './components/ProgressBar.vue'
 
 export default {
   name: 'App',
   components: {
-    Scheduler, ProgressBar
+    Scheduler//, ProgressBar
   }
 }
 </script>
@@ -26,4 +27,5 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+
 </style>

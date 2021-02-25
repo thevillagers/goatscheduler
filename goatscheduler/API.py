@@ -26,4 +26,10 @@ class BackendAPI:
         def dependency_list():
             return json.dumps(scheduler_backend.get_dependencies())
 
+        @app.route('/relationships')
+        @cross_origin()
+        def relationships():
+            return json.dumps(scheduler_backend.get_relationships())
+
+        print('\n\n\n\nbout to start on port 5011\n\n\n\n\n\n')
         threading.Thread(target=app.run, kwargs={'port': 5011}).start()
