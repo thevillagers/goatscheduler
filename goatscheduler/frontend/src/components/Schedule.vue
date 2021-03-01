@@ -1,9 +1,12 @@
 <template>
     <div class="ScheduleWrapper" v-bind:style="block.state == 'SUCCESS' ? 'background-color: green;' : 'background-color: #cbcbcb;'">
-        <div class="Schedule">
-            <h5><b>Schedule: {{ block.name }}</b></h5>
-            <p>{{ block.state }}</p>
-        </div>
+        <svg width="200" height="100" viewBox="0 0 200 100">
+            <g fill="none" stroke="black">
+                <text x="50%" y="20" dominant-baseline="middle" text-anchor="middle">SCHEDULE:</text>
+                <text x="50%" y="40" dominant-baseline="middle" text-anchor="middle">{{ block.name }}</text>
+                <text x="50%" y="80" dominant-baseline="middle" text-anchor="middle">STATUS: {{ block.state }}</text>
+            </g>
+        </svg>
     </div>
 </template>
 

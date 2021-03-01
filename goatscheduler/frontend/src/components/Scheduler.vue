@@ -1,7 +1,17 @@
 <template>
     <div class="Scheduler">
+      <!--
+      <svg width="500" height="500">
+        <g fill="none" stroke="black">
+          <rect width="100" height="100" />
+          <svg x="100" y="100">
+            <rect width="100" height="100" />
+            <text x="20" y="20">My Text</text>
+          </svg>
+        </g>
+      </svg> --> <!--  Nested SVG example -->
+      <div v-on:click="resetGraph()">Reset graph</div><div v-on:click="goUpParent()">Go Up</div>
       <div class="SchedulerGraphBox container-fluid">
-        <p v-on:click="setParent('')">Reset graph</p>
         <div class="row">
           <div class="col" v-for="component_data in relevantComponents" :key="component_data.name">
             <component :is="component_data.component_type" :block="component_data" :key="component_data.name" v-on:click.native="component_data.component_type == 'Schedule' ? setParent(component_data.name) : null" />
@@ -24,13 +34,25 @@ export default {
     data () {
       return {
         current_parent: '',
+        parent_stack: [''],
         components_json: {},
         dependencies_json: {}
       }
     },
     methods: {
         setParent: function (parent_name) {
-          this.current_parent = parent_name
+          this.parent_stack.push(parent_name)
+          this.current_parent = this.parent_stack[this.parent_stack.length - 1]
+        },
+        goUpParent: function () {
+          if (this.parent_stack.length > 1) {
+            this.parent_stack.pop()
+            this.current_parent = this.parent_stack[this.parent_stack.length - 1]
+          }
+        },
+        resetGraph: function () {
+          this.parent_stack = ['']
+          this.current_parent = this.parent_stack[0]
         },
         getComponents: function() {
             axios.get('http://localhost:5011/component_list')
