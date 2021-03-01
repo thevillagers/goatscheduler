@@ -1,20 +1,21 @@
 <template>
-    <div class="TaskWrapper" v-bind:style="block.state == 'SUCCESS' ? 'background-color: green;' : 'background-color: #cbcbcb;'">
-        <svg width="200" height="100" viewBox="0 0 200 100">
-            <g fill="none" stroke="black">
-                <text x="50%" y="20" dominant-baseline="middle" text-anchor="middle">TASK:</text>
-                <text x="50%" y="40" dominant-baseline="middle" text-anchor="middle">{{ block.name }}</text>
-                <text x="50%" y="80" dominant-baseline="middle" text-anchor="middle">STATUS: {{ block.state }}</text>
-            </g>
-        </svg>
-    </div>
+    <svg v-bind:x="x" v-bind:y="y" width="200" height="100" viewBox="0 0 200 100" class="TaskWrapper">
+        <g>
+            <rect width="200" height="100" v-bind:fill="block.state == 'SUCCESS' ? 'green' : 'none'" stroke="black" />
+            <text x="50%" y="20" dominant-baseline="middle" text-anchor="middle">TASK:</text>
+            <text x="50%" y="40" dominant-baseline="middle" text-anchor="middle">{{ block.name }}</text>
+            <text x="50%" y="80" dominant-baseline="middle" text-anchor="middle">STATUS: {{ block.state }}</text>
+        </g>
+    </svg>
 </template>
 
 <script>
 export default {
     name: 'Task',
     props: {
-        block: Object
+        block: Object,
+        x: Number,
+        y: Number
     }
 }
 </script>

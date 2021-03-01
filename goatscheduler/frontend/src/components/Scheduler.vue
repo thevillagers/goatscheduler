@@ -1,26 +1,18 @@
 <template>
     <div class="Scheduler">
-      <!--
-      <svg width="500" height="500">
-        <g fill="none" stroke="black">
-          <rect width="100" height="100" />
-          <svg x="100" y="100">
-            <rect width="100" height="100" />
-            <text x="20" y="20">My Text</text>
-          </svg>
-        </g>
-      </svg> --> <!--  Nested SVG example -->
-      <div>
-        {{ orderedComponents }}
-      </div>
       <div v-on:click="resetGraph()">Reset graph</div><div v-on:click="goUpParent()">Go Up</div>
       <div class="SchedulerGraphBox container-fluid">
-        <div class="row">
-          <div class="col" v-for="component_data in relevantComponents" :key="component_data.name">
-            <component :is="component_data.component_type" :block="component_data" :key="component_data.name" v-on:click.native="component_data.component_type == 'Schedule' ? setParent(component_data.name) : null" />
-          </div>
-        </div>
+        <svg class="SchedulerSVG" :style="{ width: (orderedComponents.length * 250) + 50, height: (maxComponentColLength * 150) + 50}">
+          <g>
+            <template v-for="(colList, colIndex) in orderedComponents">
+              <template v-for="(componentInstance, rowIndex) in colList">
+                  <component :is="componentInstance.component_type" :block="componentInstance" :x="(colIndex * 250) + 50" :y="(rowIndex * 150) + 50" :key="componentInstance.name" v-on:click.native="componentInstance.component_type == 'Schedule' ? setParent(componentInstance.name) : null" />
+              </template>
+            </template>
+          </g>
+        </svg>
       </div>
+
     </div>
 </template>
 
@@ -126,6 +118,16 @@ export default {
         }
         return columns
       },
+      maxComponentColLength () {
+        var maxLength = 0
+        console.log(this.orderedComponents)
+        for (let i = 0; i < this.orderedComponents.length; i++) {
+          if (this.orderedComponents[i].length > maxLength) {
+            maxLength = this.orderedComponents[i].length
+          }
+        }
+        return maxLength
+      },
     },
     created () {
         this.refreshComponents()
@@ -142,7 +144,8 @@ export default {
 <style scoped>
 .SchedulerGraphBox {
   height: 600px;
-  background-color: #aaaaaa;
   overflow: scroll;
+  background-color: #bbbbbb;
 }
+
 </style>
