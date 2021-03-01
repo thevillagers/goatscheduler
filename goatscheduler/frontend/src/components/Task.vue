@@ -23,7 +23,7 @@ export default {
 <style scoped>
 .TaskWrapper {
     margin: 10px;
-    width: 250px;
+    width: 200px;
     height: 100px;
     border: solid 1px black;
 }

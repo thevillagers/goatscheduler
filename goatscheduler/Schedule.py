@@ -60,6 +60,7 @@ class Schedule(Component):
         if not isinstance(components, list): components = [components]
         for component in components:
             self.add_component(component)
+        return self 
 
     def __contains__(self, components: ComponentSingleOrList) -> bool:
         """Returns whether or not a component or list of components is contained within the Schedule

@@ -10,6 +10,9 @@
           </svg>
         </g>
       </svg> --> <!--  Nested SVG example -->
+      <div>
+        {{ orderedComponents }}
+      </div>
       <div v-on:click="resetGraph()">Reset graph</div><div v-on:click="goUpParent()">Go Up</div>
       <div class="SchedulerGraphBox container-fluid">
         <div class="row">
@@ -36,7 +39,8 @@ export default {
         current_parent: '',
         parent_stack: [''],
         components_json: {},
-        dependencies_json: {}
+        dependencies_json: {},
+        orderedChainCols: []
       }
     },
     methods: {
@@ -70,6 +74,39 @@ export default {
             this.getComponents()
           }, 1500)
         },
+        getNoDependencyTasks: function(component_list) {
+          var component_names_list = []
+          for (let i = 0; i < component_list.length; i++) {
+            component_names_list.push(component_list[i].name)
+          }
+          var component_names_set = new Set(component_names_list)
+          var relevant_dependencies = []
+          for (let i = 0; i < this.dependencies_json.length; i++) {
+            if (component_names_set.has(this.dependencies_json[i].component_name) && component_names_set.has(this.dependencies_json[i].dependency_name)) {
+              relevant_dependencies.push(this.dependencies_json[i])
+            }
+          }
+          var column = []
+          var idx_to_del = []
+          for (let i = 0; i < component_list.length; i++) {
+            var has_dependency = false
+            for (let j = 0; j < relevant_dependencies.length; j++) {
+              if (component_list[i].name == relevant_dependencies[j].component_name) {
+                has_dependency = true 
+                break
+              }
+            }
+            if (!has_dependency) {
+              column.push(component_list[i])
+              idx_to_del.push(i)
+            }
+          }
+          idx_to_del.reverse()
+          for (let i = 0; i < idx_to_del.length; i++) {
+            component_list.splice(idx_to_del[i], 1)
+          }
+          return column
+        },
     },
     computed: {
       relevantComponents () {
@@ -81,70 +118,14 @@ export default {
         }
         return relevant_components
       },
-      orderedChain () {
-        var components = this.relevantComponents
-        var component_names = new Set(components)
-        var relevant_dependencies = []
-        for (let i = 0; i < this.dependencies_json.length; i++) {
-          if (component_names.has(this.dependencies_json[i].component_name) && component_names.has(this.dependencies_json[i].dependency_name)) {
-            relevant_dependencies.push(this.dependencies_json[i])
-          }
-        }
-
-        var columns = []
-        var baseColumn = []
-        var idx_to_del = []
-        for (let i = 0; i < components.length; i++) {
-          var has_dependency = false
-          for (let j = 0; j < relevant_dependencies.length; j++) {
-            if (components[i].name == relevant_dependencies[j].component_name) {
-              has_dependency = true 
-              break
-            }
-          }
-          if (!has_dependency) {
-            baseColumn.push(components[i])
-            idx_to_del.push(i)
-          }
-        }
-        idx_to_del.reverse()
-        for (let i = 0; i < idx_to_del.length; i++) {
-          components.splice(idx_to_del[i], 1)
-        }
-        columns.push(baseColumn)
-
+      orderedComponents () {
+        var components = this.relevantComponents.slice()
+        var columns = [] 
         while (components.length > 0) {
-          console.log(components.length)
-          var remaining_components = new Set(components)
-          relevant_dependencies = []
-          for (let i = 0; i < this.dependencies_json.length; i++) {
-            if (remaining_components.has(this.dependencies_json[i].component_name) && remaining_components.has(this.dependencies_json[i].dependency_name)) {
-              relevant_dependencies.push(this.dependencies_json[i])
-            }
-          }
-          var column = []
-          idx_to_del = []
-          for (let i = 0; i < components.length; i++) {
-            has_dependency = false
-            for (let j = 0; j < relevant_dependencies.length; j++) {
-              if (components[i].name == relevant_dependencies[j].component_name) {
-                has_dependency = true 
-                break
-              }
-            }
-            if (!has_dependency) {
-              column.push(components[i])
-              idx_to_del.push(i)
-            }
-          }
-          idx_to_del.reverse()
-          for (let i = 0; i < idx_to_del.length; i++) {
-            components.splice(idx_to_del[i], 1)
-          }
-          columns.push(column)
+          columns.push(this.getNoDependencyTasks(components))
         }
         return columns
-      }
+      },
     },
     created () {
         this.refreshComponents()
