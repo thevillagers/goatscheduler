@@ -2,11 +2,11 @@
     <div class="Scheduler">
       <div v-on:click="resetGraph()">Reset graph</div><div v-on:click="goUpParent()">Go Up</div>
       <div class="SchedulerGraphBox container-fluid">
-        <svg class="SchedulerSVG" :style="{ width: (orderedComponents.length * 250) + 50, height: (maxComponentColLength * 150) + 50}">
+        <svg class="SchedulerSVG" :style="{ width: (orderedComponents.length * 350) + 50, height: (maxComponentColLength * 200) + 50}">
           <g>
             <template v-for="(colList, colIndex) in orderedComponents">
               <template v-for="(componentInstance, rowIndex) in colList">
-                  <component :is="componentInstance.component_type" :block="componentInstance" :x="(colIndex * 250) + 50" :y="(rowIndex * 150) + 50" :key="componentInstance.name" v-on:click.native="componentInstance.component_type == 'Schedule' ? setParent(componentInstance.name) : null" />
+                  <component :is="componentInstance.component_type" :block="componentInstance" :x="(colIndex * 350) + 50" :y="(rowIndex * 200) + 50" :key="componentInstance.name" v-on:click.native="componentInstance.component_type == 'Schedule' ? setParent(componentInstance.name) : null" />
               </template>
             </template>
           </g>
