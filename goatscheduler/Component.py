@@ -178,6 +178,7 @@ class Component:
         self.backend.update_component_state(name=self.name, state=state)
         logger.log(20, f'State of {self.name} changed from {curr_state} to {state}')
 
+
     def dependencies_successful(self) -> bool:
         """Returns whether or not the status of all dependencies is SUCCESS
 

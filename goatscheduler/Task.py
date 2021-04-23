@@ -41,6 +41,9 @@ class Task(Component):
         self.last_run_timestamp: datetime.datetime
         self.last_run_timestamp = None
 
+        self.latest_output: str
+        self.latest_output = None
+
 
     def __str__(self) -> str:
         """Returns string representation of this Task
@@ -54,6 +57,15 @@ class Task(Component):
         parent = f'Parent: {self.parent.name if self.parent is not None else "No parent"}\n'
         return name + parent + dependencies + dependents 
 
+    def update_log_data(self) -> None:
+        """Updates the backend to hold the output of the code that ran
+        """
+        if self.backend is None:
+            logger.log(40, f"Why are you trying to change the state when theres no backend??")
+            raise Exception
+        self.backend.update_task_log_data(name=self.name, log=self.latest_output)
+
+    
     def run(self) -> None:
         """Runs the callable specified for this task and does some work to track the state of the run
 
@@ -76,7 +88,9 @@ class Task(Component):
                 self.propagate_state_downstream(RunState.NOT_READY)
                 logger.log(30, f'<{e}>')
         out = f.getvalue()
+        self.latest_output = out
         logger.log(20, f'Output of component {self.name}:\n{out}')
+        self.update_log_data()
 
 
     def refresh_state(self) -> None:

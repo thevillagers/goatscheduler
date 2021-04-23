@@ -21,6 +21,7 @@ class Components(Base):
     state = Column(Enum(RunState), nullable=False)
     parent_name = Column(String, default='')
     timestamp = Column(DateTime(timezone=True), default=func.now())
+    log = Column(String, default='')
 
     def get_dict(self):
         return {
@@ -117,6 +118,9 @@ class SchedulerBackend:
     def get_component_state(self, name: str) -> RunState:
         return self.get_component(name=name).state
 
+    def get_task_log(self, name: str) -> str:
+        return self.get_component(name=name).log
+
     def add_component(
         self,
         component, 
@@ -171,12 +175,19 @@ class SchedulerBackend:
             session.add(dependent)
         logger.log(20, f'Added dependent {dependent_name} to component {component_name}')
 
-    def update_component_state(self, name: str, state: RunState):
+    def update_component_state(self, name: str, state: RunState) -> None:
         with self.session_scope() as session:
             component = session.query(Components).filter_by(name=name).first()
             if not component:
                 raise Exception 
             component.state = state
+
+    def update_task_log_data(self, name: str, log: str) -> None:
+        with self.session_scope() as session:
+            component = session.query(Components).filter_by(name=name).first()
+            if not component:
+                raise Exception
+            component.log = log
 
     def get_components(self):
         with self.session_scope() as session:

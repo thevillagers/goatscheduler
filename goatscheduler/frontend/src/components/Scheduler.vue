@@ -6,13 +6,17 @@
           <g>
             <template v-for="(colList, colIndex) in orderedComponents">
               <template v-for="(componentInstance, rowIndex) in colList">
-                  <component :is="componentInstance.component_type" :block="componentInstance" :x="(colIndex * 350) + 50" :y="(rowIndex * 200) + 50" :key="componentInstance.name" v-on:click.native="componentInstance.component_type == 'Schedule' ? setParent(componentInstance.name) : null" />
+                  <component :is="componentInstance.component_type" :block="componentInstance" :x="(colIndex * 350) + 50" :y="(rowIndex * 200) + 50" :key="componentInstance.name" v-on:click.native="componentInstance.component_type == 'Schedule' ? setParent(componentInstance.name) : showTaskData(componentInstance.name)" />
               </template>
             </template>
           </g>
         </svg>
       </div>
-
+      <br><br>
+      <div v-if="task_name != ''">
+        <h3>Task data for {{ task_name }}</h3>
+        {{ task_data }}
+      </div>
     </div>
 </template>
 
@@ -32,10 +36,18 @@ export default {
         parent_stack: [''],
         components_json: {},
         dependencies_json: {},
-        orderedChainCols: []
+        orderedChainCols: [],
+        task_data: '',
+        task_name: ''
       }
     },
     methods: {
+        showTaskData: function (task_name) {
+          axios.get('http://localhost:5011/task_data/' + task_name)
+          .then(response => (this.task_data = response["data"]))
+
+          this.task_name = task_name
+        },
         setParent: function (parent_name) {
           this.parent_stack.push(parent_name)
           this.current_parent = this.parent_stack[this.parent_stack.length - 1]
@@ -49,6 +61,8 @@ export default {
         resetGraph: function () {
           this.parent_stack = ['']
           this.current_parent = this.parent_stack[0]
+          this.task_data = ''
+          this.task_name = ''
         },
         getComponents: function() {
             axios.get('http://localhost:5011/component_list')
